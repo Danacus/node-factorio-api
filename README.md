@@ -8,7 +8,7 @@ Download and update mods from the Factorio Mod Portal
 
 [![https://nodei.co/npm/node-factorio-api.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/node-factorio-api.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/node-factorio-api)
 
-[![Dependency Status](https://david-dm.org/Danacus/node-factorio-api.svg)](https://david-dm.org/boennemann/badges)
+[![Dependency Status](https://david-dm.org/Danacus/node-factorio-api.svg)](https://david-dm.org/Danacus/node-factorio-api)
 
 ## Features
 - [x] Download mods
