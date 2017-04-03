@@ -16,8 +16,8 @@ Download and update mods from the Factorio Mod Portal
 - [x] Search/list mods
 - [x] Remove mods
 - [ ] Get mods from saves
-- [ ] Get mods from server
-- [ ] Search/list servers
+- [x] Get mods from server
+- [x] Search/list servers
 
 ## Installation
 
@@ -74,6 +74,37 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
         ]).then(() => {
           // Done
         })
+    })
+
+    // Get all the online games
+    api.getGames().then((body) => {
+      // Get details from the first game
+      api.getGameDetails(body[0].game_id).then((details) => {
+        // Download mods for the first game
+        // First remove base from the list
+        api.downloadMods(details.mods.filter(x => {
+          if (x.name == 'base')
+            return null
+          else
+            return x
+        })).then(() => {
+          //Downloaded mods for the first game
+        })
+      })
+
+      // Sort the array: most to least players online
+      let sortTop = body.sort((a, b) => {
+        let countA = 0
+        let countB = 0
+
+        if (b.players)
+          countB = b.players.length
+
+        if (a.players)
+          countA = a.players.length
+
+        return countB - countA
+      })
     })
 }).catch(err => {
     // Oops! Something went wrong

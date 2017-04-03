@@ -220,6 +220,35 @@ class FactorioAPI {
       })
     })
   }
+
+  // ------------------------
+  // Matchmaking
+  // More information: https://wiki.factorio.com/Matchmaking_API
+  getGames() {
+    let options = {
+        method: 'GET',
+        uri: 'https://multiplayer.factorio.com/get-games',
+        qs: {
+            username: this.username,
+            token: this.token
+        },
+        json: true
+    }
+
+    return rp(options)
+  }
+
+  // Get more details from a game
+  // gameId can be retrieved from getGames()
+  getGameDetails(gameId) {
+    let options = {
+        method: 'GET',
+        uri: `https://multiplayer.factorio.com/get-game-details/${gameId}`,
+        json: true
+    }
+
+    return rp(options)
+  }
 }
 
 export default FactorioAPI
