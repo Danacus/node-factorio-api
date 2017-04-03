@@ -4,15 +4,15 @@
 
 Download and update mods from the Factorio Mod Portal
 
-
 ----------
 
+[![https://nodei.co/npm/node-factorio-api.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/node-factorio-api.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/node-factorio-api)
 
-### Features
+## Features
 - [x] Download mods
 - [x] Update mods
 - [x] Search/list mods
-- [ ] Remove mods
+- [x] Remove mods
 - [ ] Get mods from saves
 - [ ] Get mods from server
 - [ ] Search/list servers
