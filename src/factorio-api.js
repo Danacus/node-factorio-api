@@ -10,6 +10,11 @@ class FactorioAPI {
     this.username = null
     this.modPath = modPath
     this.allowMultipleVersions = allowMultipleVersions
+    this.authenticated = false
+  }
+
+  isAuthenticated() {
+    return this.authenticated
   }
 
   // ------------------------
@@ -20,6 +25,7 @@ class FactorioAPI {
       if (props.username && props.token) {
         this.token = props.token
         this.username = props.username
+        this.authenticated = true
         resolve(props.token)
       } else if (props.username && props.password) {
         let options = {
@@ -35,6 +41,7 @@ class FactorioAPI {
 
         rp(options).then((body) => {
           this.username = body[0]
+          this.authenticated = true
           resolve(body[0])
         }).catch((err) => {
           reject(err)
@@ -190,6 +197,26 @@ class FactorioAPI {
         })
       }).catch((err) => {
         reject(err)
+      })
+    })
+  }
+
+  removeMods(mod) {
+    return new Promise((resolve, reject) => {
+      let promises = []
+
+      if (!mod.version) {
+        mod.version = "*"
+      }
+
+      jetpack.findAsync(this.modPath, { matching: `${mod.name}_${mod.version}.zip`}).then((files) => {
+        files.forEach((file) => {
+          promises.push(jetpack.removeAsync(file))
+        })
+      })
+
+      Promise.all(promises).then(() => {
+        resolve()
       })
     })
   }
