@@ -249,6 +249,35 @@ class FactorioAPI {
 
     return rp(options)
   }
+
+  // Get mods from level-init.dat (in save zip archive)
+  getModsFromSave(file) {
+    return new Promise(function(resolve, reject) {
+      jetpack.readAsync(file, 'buffer').then((buffer) => {
+        let mods = []
+        let modCount = buffer.readUIntBE(48, 1)
+        for (var i = modCount, pos = 52; i > 0; i--) {
+          let length = buffer.readUIntBE(pos, 1)
+
+          let modName = buffer.toString('utf-8', pos, pos + length + 2).trim()
+          let vMajor = buffer.readUIntBE(pos + length + 1, 1)
+          let vMinor = buffer.readUIntBE(pos + length + 2, 1)
+          let vPatch = buffer.readUIntBE(pos + length + 3, 1)
+
+          let fullVersion = 'v' + vMajor + '.' + vMinor + '.' + vPatch
+
+          // Remove non-ASCII characters
+          modName = modName.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
+
+          mods.push({name: modName, version: fullVersion})
+
+          pos += length + 4
+        }
+
+        resolve(mods)
+      })
+    })
+  }
 }
 
 export default FactorioAPI

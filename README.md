@@ -15,7 +15,7 @@ Download and update mods from the Factorio Mod Portal
 - [x] Update mods
 - [x] Search/list mods
 - [x] Remove mods
-- [ ] Get mods from saves
+- [x] Get mods from saves
 - [x] Get mods from server
 - [x] Search/list servers
 
@@ -105,6 +105,11 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
 
         return countB - countA
       })
+    })
+
+    // Get all the mods used in a saved game
+    api.getModsFromSave('level-init.dat').then((mods) => {
+      // mods contains all mods in a save with name and version
     })
 }).catch(err => {
     // Oops! Something went wrong
