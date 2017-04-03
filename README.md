@@ -17,6 +17,10 @@ Download and update mods from the Factorio Mod Portal
 - [ ] Get mods from server
 - [ ] Search/list servers
 
+## Installation
+
+`npm install node-factorio-api`
+
 ## Usage
 
 ```javascript
