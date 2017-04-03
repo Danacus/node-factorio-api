@@ -1,5 +1,5 @@
 # node-factorio-api
-=======
+
 ----------
 
 Download and update mods from the Factorio Mod Portal
