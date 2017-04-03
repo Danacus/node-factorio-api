@@ -1,6 +1,6 @@
 {
 	"name": "factorio-api",
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"description": "Get data from the factorio mod portal and matchmaker",
 	"main": "index.js",
 	"scripts": {
