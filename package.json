@@ -1,8 +1,8 @@
 {
-	"name": "factorio-api",
-	"version": "0.0.4",
+	"name": "node-factorio-api",
+	"version": "0.0.7",
 	"description": "Get data from the factorio mod portal and matchmaker",
-	"main": "index.js",
+	"main": "lib/node-factorio-api.js",
 	"scripts": {
 		"start": "babel src -d lib && node lib/test.js"
 	},
