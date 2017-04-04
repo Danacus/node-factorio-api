@@ -41,8 +41,8 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
     api.searchMods({q: 'bob', order: 'top', page_size: 5}).then((body) => {
         // Download the found mods
         api.downloadMods(body.results.map(x => {return {name: x.name}})).then(() => {
-            // Remove all mods that start with 'bob'
-            api.removeMods({name: "bob*"}).then(() => {
+            // Remove all mods that start with 'bob' (glob patterns)
+            api.removeModsMatching({name: "bob*"}).then(() => {
                 //Done
             })
         })
@@ -73,7 +73,13 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
             {name: 'Foreman'},
             {name :'Factorissimo2'}
         ]).then(() => {
-          // Done
+          api.removeMods([
+            {name: 'Foreman'},
+            {name :'Factorissimo2'},
+            {name :'FARL', version: '0.7.4'}
+          ]).then(() => {
+            // Done
+          })
         })
     })
 

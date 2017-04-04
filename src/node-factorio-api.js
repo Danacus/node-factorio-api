@@ -201,7 +201,7 @@ class FactorioAPI {
     })
   }
 
-  removeMods(mod) {
+  removeModsMatching(mod) {
     return new Promise((resolve, reject) => {
       let promises = []
 
@@ -219,6 +219,10 @@ class FactorioAPI {
         resolve()
       })
     })
+  }
+
+  removeMods(mods) {
+    return Promise.all(mods.map(mod => this.removeMod(mod)))
   }
 
   downloadDependencies(mod, optionalMods = false) {
