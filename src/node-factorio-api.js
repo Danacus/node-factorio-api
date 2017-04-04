@@ -221,6 +221,50 @@ class FactorioAPI {
     })
   }
 
+  downloadDependencies(mod, optionalMods = false) {
+    return new Promise((resolve, reject) => {
+      this.getMod(mod.name).then((onlineMod) => {
+        let release
+
+        if (mod.version) {
+          release = onlineMod.releases.find(x => x.version == mod.version)
+        } else {
+          release = onlineMod.releases[0]
+        }
+
+        let dependencies = release.info_json.dependencies
+
+        if (!optionalMods) {
+          // Ignore "base" and dependencies that start with "?"
+          dependencies = dependencies.filter(x => x[0] != "?" && x.substring(0, 4) != "base")
+        } else {
+          dependencies = dependencies.map(x => {
+            if (x[0] == "?") {
+              // Remove "? "
+              return x.substring(2)
+            } else {
+              return x
+            }
+          })
+
+          // Ignore "base"
+          dependencies = dependencies.filter(x => x.substring(0, 4) != "base")
+        }
+
+        // Ignore version number, only look at name and create object with name
+        dependencies = dependencies.map(x => { return {name: x.split(" ")[0]}})
+
+        this.downloadMods(dependencies).then(() => {
+          resolve()
+        }).catch((err) => {
+          reject(err)
+        })
+      }).catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
   // ------------------------
   // Matchmaking
   // More information: https://wiki.factorio.com/Matchmaking_API
