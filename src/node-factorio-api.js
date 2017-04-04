@@ -5,7 +5,7 @@ const download = require('download');
 const path = require('path');
 
 class FactorioAPI {
-  constructor(modPath, allowMultipleVersions = false) {
+  static init(modPath, allowMultipleVersions = false) {
     this.token = null
     this.username = null
     this.modPath = modPath
@@ -13,13 +13,13 @@ class FactorioAPI {
     this.authenticated = false
   }
 
-  isAuthenticated() {
+  static isAuthenticated() {
     return this.authenticated
   }
 
   // ------------------------
   // Authenication with username and password/token
-  authenticate(props) {
+  static authenticate(props) {
     return new Promise((resolve, reject) => {
       props.require_ownership = typeof props.require_ownership !== 'undefined' ? props.require_ownership : false
       if (props.username && props.token) {
@@ -55,7 +55,7 @@ class FactorioAPI {
   // ------------------------
   // Mod Portal
   // More information: https://wiki.factorio.com/Mod_Portal_API
-  getMod(name) {
+  static getMod(name) {
     return new Promise((resolve, reject) => {
       let options = {
           method: 'GET',
@@ -75,7 +75,7 @@ class FactorioAPI {
     })
   }
 
-  searchMods(props) {
+  static searchMods(props) {
     return new Promise((resolve, reject) => {
       let options = {
           method: 'GET',
@@ -94,9 +94,9 @@ class FactorioAPI {
 
   // ------------------------
   // mods = [{name: {name}, version: {current version}}]
-  updateMods(mods) {
+  static updateMods(mods, factorioVersion = "0.0.0") {
     let promises = mods.map((mod) => {
-      return this.updateMod(mod)
+      return this.updateMod(mod, factorioVersion)
     })
 
     return Promise.all(promises)
@@ -109,19 +109,30 @@ class FactorioAPI {
     version: {current version}
   }
   */
-  updateMod(mod) {
+  static updateMod(mod, factorioVersion = "0.0.0") {
     return new Promise((resolve, reject) => {
-      this.getMod(mod.name).then((onlineMod) => {
-        let current = mod.version
-        let latest = onlineMod.releases[0].version
-        if (semver.gt(latest, current)) {
-          console.log(mod.name + ": Update available: " + current + " --> " + latest);
-          this.downloadModFromUrl(onlineMod.releases[0].download_url).then(() => {
+      this.checkUpdate(mod, factorioVersion).then((result) => {
+        if (result) {
+          this.downloadMod({name: mod.name, version: result}).then(() => {
             resolve()
+          }).catch((err) => {
+            reject(err)
           })
         } else {
-          console.log(mod.name + ": Up-to-date");
           resolve()
+        }
+      })
+    })
+  }
+
+  static checkUpdate(mod, factorioVersion = "0.0.0") {
+    return new Promise((resolve, reject) => {
+      this.getMod(mod.name).then((onlineMod) => {
+        if (semver.gt(onlineMod.releases[0].version, mod.version)
+          && (semver.major(onlineMod.releases[0].version) == semver.major(factorioVersion) || factorioVersion == "0.0.0")) {
+          resolve(onlineMod.releases[0].version)
+        } else {
+          resolve(null)
         }
       }).catch((err) => {
         reject(err)
@@ -131,7 +142,7 @@ class FactorioAPI {
 
   // ------------------------
   // mods = [{name: {name}, version: {version you want to download}}]
-  downloadMods(mods) {
+  static downloadMods(mods) {
     let promises = mods.map((mod) => {
       return this.downloadMod(mod)
     })
@@ -146,7 +157,7 @@ class FactorioAPI {
     version: {version you want to download}
   }
   */
-  downloadMod(mod) {
+  static downloadMod(mod) {
     return new Promise((resolve, reject) => {
       this.getMod(mod.name).then((onlineMod) => {
         let release
@@ -169,7 +180,7 @@ class FactorioAPI {
   // ------------------------
   // url = {download_url property from release}
   // (example: /api/downloads/data/mods/id/name_version.zip)
-  downloadModFromUrl(url) {
+  static downloadModFromUrl(url) {
     return new Promise((resolve, reject) => {
       let fullUrl = 'https://mods.factorio.com' + url + `?username=${this.username}&token=${this.token}`
       let fileName = url.substr(url.lastIndexOf('/') + 1);
@@ -188,11 +199,11 @@ class FactorioAPI {
               })
 
               Promise.all(promises).then(() => {
-                resolve()
+                resolve(name)
               })
             })
           } else {
-            resolve()
+            resolve(name)
           }
         })
       }).catch((err) => {
@@ -201,7 +212,7 @@ class FactorioAPI {
     })
   }
 
-  removeModsMatching(mod) {
+  static removeModsMatching(mod) {
     return new Promise((resolve, reject) => {
       let promises = []
 
@@ -221,11 +232,11 @@ class FactorioAPI {
     })
   }
 
-  removeMods(mods) {
-    return Promise.all(mods.map(mod => this.removeMod(mod)))
+  static removeMods(mods) {
+    return Promise.all(mods.map(mod => this.removeModsMatching(mod)))
   }
 
-  downloadDependencies(mod, optionalMods = false) {
+  static downloadDependencies(mod, optionalMods = false) {
     return new Promise((resolve, reject) => {
       this.getMod(mod.name).then((onlineMod) => {
         let release
@@ -272,7 +283,7 @@ class FactorioAPI {
   // ------------------------
   // Matchmaking
   // More information: https://wiki.factorio.com/Matchmaking_API
-  getGames() {
+  static getGames() {
     let options = {
         method: 'GET',
         uri: 'https://multiplayer.factorio.com/get-games',
@@ -288,7 +299,7 @@ class FactorioAPI {
 
   // Get more details from a game
   // gameId can be retrieved from getGames()
-  getGameDetails(gameId) {
+  static getGameDetails(gameId) {
     let options = {
         method: 'GET',
         uri: `https://multiplayer.factorio.com/get-game-details/${gameId}`,
@@ -299,7 +310,7 @@ class FactorioAPI {
   }
 
   // Get mods from level-init.dat (in save zip archive)
-  getModsFromSave(file) {
+  static getModsFromSave(file) {
     return new Promise(function(resolve, reject) {
       jetpack.readAsync(file, 'buffer').then((buffer) => {
         let mods = []

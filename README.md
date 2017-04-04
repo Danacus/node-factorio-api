@@ -27,9 +27,9 @@ Download and update mods from the Factorio Mod Portal
 ## Usage
 
 ```javascript
-import Api from 'node-factorio-api'
-// Create a new instance
-let api = new Api("path/to/mods/folder", false)
+import api from 'node-factorio-api'
+// Initialize the api
+api.init("path/to/mods/folder", false)
 // Set to true if you want to allow multiple version of a mod
 ```
 
