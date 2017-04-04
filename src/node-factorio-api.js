@@ -328,4 +328,4 @@ class FactorioAPI {
   }
 }
 
-export default FactorioAPI
+module.exports = FactorioAPI
