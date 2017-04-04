@@ -82,8 +82,10 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
       // Done
     })
 
-    // Download all dependencies (including optional)
-    api.downloadDependencies({name: 'bobores'}, true).then(() => {
+    // Download all dependencies (including optional) from version 0.14.0
+    api.downloadDependencies(
+      {name: 'bobores', version: '0.14.0'}, true)
+    .then(() => {
       // Done
     })
 
