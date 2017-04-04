@@ -19,6 +19,7 @@ Download and update mods from the Factorio Mod Portal
 - [x] Get mods from saves
 - [x] Get mods from server
 - [x] Search/list servers
+- [x] Read mod zip file (get info.json)
 
 ## Installation
 
@@ -31,6 +32,9 @@ import api from 'node-factorio-api'
 // Initialize the api
 api.init("path/to/mods/folder", false)
 // Set to true if you want to allow multiple version of a mod
+
+// Optional: add path for saves
+api.setSavesPath('path/to/saves/folder')
 ```
 
 #### Examples
@@ -127,8 +131,58 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
     })
 
     // Get all the mods used in a saved game
-    api.getModsFromSave('level-init.dat').then((mods) => {
-      // mods contains all mods in a save with name and version
+    api.getModsFromSave('my_awesome_factory').then((mods) => {
+      // mods is an array of all mods in a save with name and version
+    })
+
+    api.getModsFromSaveFile('my_awesome_factory.zip').then((mods) => {
+      // mods is an array of all mods in a save with name and version
+    })
+
+    api.getModsFromSaves().then(list => {
+      // list is an array
+      /* Example output
+        [
+          {
+            name: "my_awesome_factory",
+            mods: [
+              {
+                name: "an_awesome_mod",
+                version: "1.2.3"
+              },
+              {
+                name: "another_awesome_mod",
+                version: "3.2.1"
+              }
+            ]
+          },
+          {
+            name: "my_other_factory",
+            mods: [
+              {
+                name: "yet_another_mod",
+                version: "4.2.3"
+              },
+              {
+                name: "another_nice_mod",
+                version: "3.8.1"
+              }
+            ]
+          }
+        ]
+      */
+    })
+
+    api.readModZip({name: "FARL", version: "0.7.4"}).then((info) => {
+      // info is the parsed info.json file of the mod
+    })
+
+    api.readModZipFile("FARL_0.7.4.zip").then((info) => {
+      // info is the parsed info.json file of the mod
+    })
+
+    api.readModZips().then((list) => {
+      // list is an array with the parsed info.json file of each mod
     })
 }).catch(err => {
     // Oops! Something went wrong

@@ -3,6 +3,7 @@ import semver from 'semver';
 const jetpack = require('fs-jetpack');
 const download = require('download');
 const path = require('path');
+const JSZip = require('jszip')
 
 class FactorioAPI {
   static init(modPath, allowMultipleVersions = false) {
@@ -11,6 +12,14 @@ class FactorioAPI {
     this.modPath = modPath
     this.allowMultipleVersions = allowMultipleVersions
     this.authenticated = false
+  }
+
+  static setModsPath(modPath) {
+    this.modPath = modPath
+  }
+
+  static setSavesPath(savePath) {
+    this.savePath = savePath
   }
 
   static isAuthenticated() {
@@ -310,30 +319,105 @@ class FactorioAPI {
   }
 
   // Get mods from level-init.dat (in save zip archive)
-  static getModsFromSave(file) {
-    return new Promise(function(resolve, reject) {
-      jetpack.readAsync(file, 'buffer').then((buffer) => {
-        let mods = []
-        let modCount = buffer.readUIntBE(48, 1)
-        for (var i = modCount, pos = 52; i > 0; i--) {
-          let length = buffer.readUIntBE(pos, 1)
+  static getModsFromSaveFile(fileName, resolveFileName = false) {
+    return new Promise((resolve, reject) => {
+      let file = path.join(this.savePath, fileName)
+      jetpack.readAsync(file, 'buffer').then((buf) => {
+        JSZip.loadAsync(buf)
+        .then((zip) => {
+          return zip.file(/level-init\.dat/)[0].async('nodebuffer')
+        })
+        .then((buffer) => {
+          let mods = []
+          let modCount = buffer.readUIntBE(48, 1)
+          for (var i = modCount, pos = 52; i > 0; i--) {
+            let length = buffer.readUIntBE(pos, 1)
 
-          let modName = buffer.toString('utf-8', pos, pos + length + 2).trim()
-          let vMajor = buffer.readUIntBE(pos + length + 1, 1)
-          let vMinor = buffer.readUIntBE(pos + length + 2, 1)
-          let vPatch = buffer.readUIntBE(pos + length + 3, 1)
+            let modName = buffer.toString('utf-8', pos, pos + length + 2).trim()
+            let vMajor = buffer.readUIntBE(pos + length + 1, 1)
+            let vMinor = buffer.readUIntBE(pos + length + 2, 1)
+            let vPatch = buffer.readUIntBE(pos + length + 3, 1)
 
-          let fullVersion = 'v' + vMajor + '.' + vMinor + '.' + vPatch
+            let fullVersion = 'v' + vMajor + '.' + vMinor + '.' + vPatch
 
-          // Remove non-ASCII characters
-          modName = modName.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
+            // Remove non-ASCII characters
+            modName = modName.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
 
-          mods.push({name: modName, version: fullVersion})
+            mods.push({name: modName, version: fullVersion})
 
-          pos += length + 4
-        }
+            pos += length + 4
+          }
 
-        resolve(mods)
+          if (resolveFileName) {
+            resolve({name: fileName.replace('.zip', ''), mods: mods})
+          } else {
+            resolve(mods)
+          }
+        })
+        .catch((err) => {
+          reject(err)
+        })
+      })
+    })
+  }
+
+  static getModsFromSave(saveName) {
+    let fileName = `${saveName}.zip`
+    return this.getModsFromSaveFile(fileName)
+  }
+
+  static getModsFromSaves() {
+    return new Promise((resolve, reject) => {
+      jetpack.findAsync(this.savePath, { matching: '*.zip' }).then((files) => {
+        Promise.all(files.map(x => this.getModsFromSaveFile(path.basename(x), true))).then((list) => {
+          resolve(list)
+        }).catch((err) => {
+          reject(err)
+        })
+      }).catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
+  static readModZipFile(fileName) {
+    return new Promise((resolve, reject) => {
+      let file = path.join(this.modPath, fileName)
+      jetpack.readAsync(file, 'buffer')
+      .then((buffer) => {
+        JSZip.loadAsync(buffer)
+        .then((zip) => {
+          return zip.file(/info\.json/)[0].async('text')
+        })
+        .then((data) => {
+          data = JSON.parse(data)
+          resolve(data)
+        })
+        .catch((err) => {
+          reject(err)
+        })
+      })
+      .catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
+  static readModZip(mod) {
+    let fileName = `${mod.name}_${mod.version}.zip`
+    return readModZipFile(fileName)
+  }
+
+  static readModZips() {
+    return new Promise((resolve, reject) => {
+      jetpack.findAsync(this.modPath, { matching: '*_*.zip' }).then((files) => {
+        Promise.all(files.map(x => this.readModZipFile(path.basename(x)))).then((list) => {
+          resolve(list)
+        }).catch((err) => {
+          reject(err)
+        })
+      }).catch((err) => {
+        reject(err)
       })
     })
   }
