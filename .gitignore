@@ -2,3 +2,5 @@ lib/
 node_modules/
 src/test.js
 src/test2.js
+mods/
+saves/

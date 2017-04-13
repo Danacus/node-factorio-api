@@ -19,7 +19,7 @@ describe('init', () => {
   })
 
   it('authenticates with username and token', (done) => {
-    api.authenticate({username: 'Danacus', token: '583051c5259eec328eb9ebaa1655a8'})
+    api.authenticate({username: 'Danacus', token: ''})
       .should.be.fulfilled.notify(done)
   })
 })
