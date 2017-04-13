@@ -1,25 +1,63 @@
 import rp from 'request-promise'
-import semver from 'semver';
-const jetpack = require('fs-jetpack');
-const download = require('download');
-const path = require('path');
-const JSZip = require('jszip')
+import semver from 'semver'
+import jetpack from 'fs-jetpack'
+import path from 'path'
+import JSZip from 'jszip'
+import request from 'request'
+import progress from 'request-progress'
 
 class FactorioAPI {
-  static init(modPath, allowMultipleVersions = false) {
+  /**
+ * This function initializes the api.
+ * @param {boolean} [allowMultipleVersions=false]
+ * @param {string} [modPath=''] path to the mods folder
+ * @param {string} [savePath=''] path to the saves folder (optional)
+ * @param {string} [gameVersion='0.0.0'] the version of the game (optional)
+ */
+  static init(allowMultipleVersions = false, modPath = '', savePath = '', gameVersion = "0.0.0") {
     this.token = null
     this.username = null
     this.modPath = modPath
+    this.savePath = savePath
+    this.gameVersion = gameVersion
     this.allowMultipleVersions = allowMultipleVersions
     this.authenticated = false
   }
 
-  static setModsPath(modPath) {
+  /**
+ * This function sets the game version.
+ * @param {string} gameVersion the version of the game
+ */
+  static setGameVersion(gameVersion) {
+    this.gameVersion = gameVersion
+  }
+
+  /**
+ * This function sets the mod path.
+ * @param {string} modPath path to the mods folder
+ */
+  static setModPath(modPath) {
     this.modPath = modPath
   }
 
-  static setSavesPath(savePath) {
+  /**
+ * This function sets the mod path.
+ * @param {string} savePath path to the saves folder
+ */
+  static setSavePath(savePath) {
     this.savePath = savePath
+  }
+
+  static getSavePath() {
+    return this.savePath
+  }
+
+  static getModPath() {
+    return this.modPath
+  }
+
+  static getGameVersion() {
+    return this.gameVersion
   }
 
   static isAuthenticated() {
@@ -73,15 +111,16 @@ class FactorioAPI {
       }
 
       rp(options).then((body) => {
-        if (body.detail === 'Not found.') {
-          reject('Error: Mod not found')
-        } else {
-          resolve(body)
-        }
+        resolve(body)
       }).catch((err) => {
         reject(err)
       })
     })
+  }
+
+  static getMods(mods) {
+    let promises = mods.map(mod => getMod(mod.name))
+    return Promise.all(promises)
   }
 
   static searchMods(props) {
@@ -103,11 +142,8 @@ class FactorioAPI {
 
   // ------------------------
   // mods = [{name: {name}, version: {current version}}]
-  static updateMods(mods, factorioVersion = "0.0.0") {
-    let promises = mods.map((mod) => {
-      return this.updateMod(mod, factorioVersion)
-    })
-
+  static updateMods(mods, factorioVersion = this.gameVersion) {
+    let promises = mods.map(mod => this.updateMod(mod, factorioVersion))
     return Promise.all(promises)
   }
 
@@ -118,30 +154,17 @@ class FactorioAPI {
     version: {current version}
   }
   */
-  static updateMod(mod, factorioVersion = "0.0.0") {
+  static updateMod(mod, factorioVersion = this.gameVersion) {
     return new Promise((resolve, reject) => {
       this.checkUpdate(mod, factorioVersion).then((result) => {
-        if (result) {
-          this.downloadMod({name: mod.name, version: result}).then(() => {
-            resolve()
+        if (result.hasUpdate) {
+          this.downloadMod({name: mod.name, version: result.version}).then(() => {
+            resolve(result)
           }).catch((err) => {
             reject(err)
           })
         } else {
-          resolve()
-        }
-      })
-    })
-  }
-
-  static checkUpdate(mod, factorioVersion = "0.0.0") {
-    return new Promise((resolve, reject) => {
-      this.getMod(mod.name).then((onlineMod) => {
-        if (semver.gt(onlineMod.releases[0].version, mod.version)
-          && (semver.major(onlineMod.releases[0].version) == semver.major(factorioVersion) || factorioVersion == "0.0.0")) {
-          resolve(onlineMod.releases[0].version)
-        } else {
-          resolve(null)
+          resolve(result)
         }
       }).catch((err) => {
         reject(err)
@@ -149,13 +172,38 @@ class FactorioAPI {
     })
   }
 
+  static checkUpdate(mod, factorioVersion = this.gameVersion) {
+    return new Promise((resolve, reject) => {
+      this.getMod(mod.name).then((onlineMod) => {
+        if (factorioVersion.split('.').length < 3) {
+          factorioVersion += '.0'
+        }
+        onlineMod.releases.forEach(release => {
+          if (release.factorio_version.split('.').length < 3) {
+            release.factorio_version += '.0'
+          }
+          if (semver.gt(release.version, mod.version)
+            && (semver.minor(release.factorio_version) == semver.minor(factorioVersion) || factorioVersion == "0.0.0")) {
+            resolve({onlineMod, hasUpdate: true, version: release.version})
+          }
+        })
+
+        resolve({onlineMod, hasUpdate: false})
+      }).catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
+  static checkUpdates(mods, factorioVersion = this.gameVersion) {
+    let promises = mods.map((mod) => this.checkUpdate(mod, factorioVersion))
+    return Promise.all(promises)
+  }
+
   // ------------------------
   // mods = [{name: {name}, version: {version you want to download}}]
   static downloadMods(mods) {
-    let promises = mods.map((mod) => {
-      return this.downloadMod(mod)
-    })
-
+    let promises = mods.map(mod => this.downloadMod(mod))
     return Promise.all(promises)
   }
 
@@ -178,7 +226,9 @@ class FactorioAPI {
         }
 
         this.downloadModFromUrl(release.download_url).then(() => {
-          resolve()
+          resolve(onlineMod)
+        }).catch((err) => {
+          reject(err)
         })
       }).catch((err) => {
         reject(err)
@@ -195,29 +245,33 @@ class FactorioAPI {
       let fileName = url.substr(url.lastIndexOf('/') + 1);
       let name = fileName.replace(fileName.substr(fileName.lastIndexOf('_')), '')
 
-      download(fullUrl).then(data => {
-        jetpack.writeAsync(path.join(this.modPath, fileName), data).then(() => {
-          if (!this.allowMultipleVersions) {
-            jetpack.findAsync(this.modPath, { matching: `${name}_*.zip`}).then((files) => {
-              let promises = []
 
-              files.forEach((file) => {
-                if (path.basename(file) != fileName) {
-                  promises.push(jetpack.removeAsync(file))
-                }
-              })
-
-              Promise.all(promises).then(() => {
-                resolve(name)
-              })
-            })
-          } else {
-            resolve(name)
-          }
-        })
-      }).catch((err) => {
-        reject(err)
+      progress(request(fullUrl))
+      .on('error', (err) => {
+          reject(err)
       })
+      .on('end', () => {
+        if (!this.allowMultipleVersions) {
+          jetpack.findAsync(this.modPath, { matching: `${name}_*.zip`}).then((files) => {
+            let promises = []
+
+            files.forEach((file) => {
+              if (path.basename(file) != fileName) {
+                promises.push(jetpack.removeAsync(file))
+              }
+            })
+
+            Promise.all(promises).then(() => {
+              resolve(name)
+            }).catch((err) => {
+              reject(err)
+            })
+          })
+        } else {
+          resolve(name)
+        }
+      })
+      .pipe(jetpack.createWriteStream(path.join(this.modPath, fileName)))
     })
   }
 
@@ -246,6 +300,18 @@ class FactorioAPI {
   }
 
   static downloadDependencies(mod, optionalMods = false) {
+    return new Promise((resolve, reject) => {
+      this.getDependencies(mod, optionalMods).then((dependencies) => {
+        return this.downloadMods(dependencies)
+      }).then((mods) => {
+        resolve(mods)
+      }).catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
+  static getDependencies(mod, optionalMods = false) {
     return new Promise((resolve, reject) => {
       this.getMod(mod.name).then((onlineMod) => {
         let release
@@ -277,12 +343,7 @@ class FactorioAPI {
 
         // Ignore version number, only look at name and create object with name
         dependencies = dependencies.map(x => { return {name: x.split(" ")[0]}})
-
-        this.downloadMods(dependencies).then(() => {
-          resolve()
-        }).catch((err) => {
-          reject(err)
-        })
+        resolve(dependencies)
       }).catch((err) => {
         reject(err)
       })
@@ -361,9 +422,9 @@ class FactorioAPI {
     })
   }
 
-  static getModsFromSave(saveName) {
+  static getModsFromSave(saveName, resolveFileName = false) {
     let fileName = `${saveName}.zip`
-    return this.getModsFromSaveFile(fileName)
+    return this.getModsFromSaveFile(fileName, resolveFileName)
   }
 
   static getModsFromSaves() {
@@ -412,6 +473,7 @@ class FactorioAPI {
     return new Promise((resolve, reject) => {
       jetpack.findAsync(this.modPath, { matching: '*_*.zip' }).then((files) => {
         Promise.all(files.map(x => this.readModZipFile(path.basename(x)))).then((list) => {
+          list = list.sort((a, b) => a.name.localeCompare(b.name))
           resolve(list)
         }).catch((err) => {
           reject(err)
@@ -420,6 +482,38 @@ class FactorioAPI {
         reject(err)
       })
     })
+  }
+
+  static loadInstalledMods() {
+    return new Promise((resolve, reject) => {
+      this.readModZips().then((list) => {
+        if (!jetpack.exists(path.join(this.modPath, 'mod-list.json'))) {
+          jetpack.write(path.join(this.modPath, 'mod-list.json'), {mods: []})
+        }
+        jetpack.readAsync(path.join(this.modPath, 'mod-list.json'), 'json').then((modListJson) => {
+          list = list.map(mod => {
+            let jsonMod = modListJson.mods.find(x => x.name == mod.name)
+            if (jsonMod) {
+              mod.enabled = (jsonMod.enabled == 'true')
+            } else {
+              mod.enabled = true
+            }
+            return mod
+          })
+          list = list.sort((a, b) => a.name.localeCompare(b.name))
+          resolve(list)
+        }).catch((err) => {
+          reject(err)
+        })
+      }).catch((err) => {
+        reject(err)
+      })
+    })
+  }
+
+  static saveModList(mods) {
+    mods = mods.map(mod => {return {name: mod.name, enabled: mod.enabled.toString()}})
+    return jetpack.writeAsync(path.join(this.modPath, 'mod-list.json'), JSON.stringify({mods: mods}))
   }
 }
 

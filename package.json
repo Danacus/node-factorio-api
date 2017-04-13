@@ -1,26 +1,36 @@
 {
-  "name": "node-factorio-api",
-  "version": "0.1.0",
-  "description": "Get data from the factorio mod portal and matchmaker",
-  "main": "lib/node-factorio-api.js",
-  "scripts": {
-    "start": "babel src -d lib && node lib/test.js"
-  },
-  "keywords": [
-    "factorio",
-    "mod",
-    "portal",
-    "matchmaker",
-    "api"
-  ],
-  "author": "Danacus",
-  "license": "ISC",
-  "dependencies": {
-    "download": "^5.0.3",
-    "fs-jetpack": "^0.13.3",
-    "jszip": "^3.1.3",
-    "request": "^2.81.0",
-    "request-promise": "^4.2.0",
-    "semver": "^5.3.0"
-  }
+	"name": "node-factorio-api",
+	"version": "0.1.21",
+	"description": "Get data from the factorio mod portal and matchmaker",
+	"main": "lib/node-factorio-api.js",
+	"scripts": {
+		"start": "babel src -d lib && node lib/test.js",
+		"test": "mocha --compilers js:babel-core/register --recursive",
+		"test:watch": "yarn test -- --watch"
+	},
+	"keywords": [
+		"factorio",
+		"mod",
+		"portal",
+		"matchmaker",
+		"api"
+	],
+	"author": "Danacus",
+	"license": "ISC",
+	"dependencies": {
+		"chai": "^3.5.0",
+		"chai-as-promised": "^6.0.0",
+		"download-to-file": "^2.0.0",
+		"fs-jetpack": "^0.13.3",
+		"jszip": "^3.1.3",
+		"mocha": "^3.2.0",
+		"request": "^2.81.0",
+		"request-progress": "^3.0.0",
+		"request-promise": "^4.2.0",
+		"semver": "^5.3.0"
+	},
+	"devDependencies": {
+		"babel-cli": "^6.24.1",
+		"babel-preset-env": "^1.3.3"
+	}
 }
