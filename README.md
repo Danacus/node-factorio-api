@@ -10,6 +10,50 @@ Download and update mods from the Factorio Mod Portal
 
 [![Dependency Status](https://david-dm.org/Danacus/node-factorio-api.svg)](https://david-dm.org/Danacus/node-factorio-api)
 
+## Table of Contents
+
+- [node-factorio-api](#node-factorio-api)
+  * [Features](#features)
+  * [Installation](#installation)
+  * [Usage](#usage)
+      - [Examples](#examples)
+  * [Documentation](#documentation)
+    + [init](#init)
+    + [setGameVersion](#setgameversion)
+    + [setModPath](#setmodpath)
+    + [setSavePath](#setsavepath)
+    + [getSavePath](#getsavepath)
+    + [getModPath](#getmodpath)
+    + [getGameVersion](#getgameversion)
+    + [isAuthenticated](#isauthenticated)
+    + [authenticate](#authenticate)
+    + [getMod](#getmod)
+    + [getMods](#getmods)
+    + [searchMods](#searchmods)
+    + [updateMod](#updatemod)
+    + [updateMods](#updatemods)
+    + [checkUpdate](#checkupdate)
+    + [checkUpdates](#checkupdates)
+    + [downloadMod](#downloadmod)
+    + [downloadMods](#downloadmods)
+    + [downloadModFromUrl](#downloadmodfromurl)
+    + [removeModsMatching](#removemodsmatching)
+    + [removeMods](#removemods)
+    + [downloadDependencies](#downloaddependencies)
+    + [getDependencies](#getdependencies)
+    + [getGames](#getgames)
+    + [getGameDetails](#getgamedetails)
+    + [getModsFromSaveFile](#getmodsfromsavefile)
+    + [getModsFromSave](#getmodsfromsave)
+    + [getModsFromSaves](#getmodsfromsaves)
+    + [readModZipFile](#readmodzipfile)
+    + [readModZip](#readmodzip)
+    + [readModZips](#readmodzips)
+    + [loadInstalledMods](#loadinstalledmods)
+    + [saveModList](#savemodlist)
+  * [Useful information](#useful-information)
+
+
 ## Features
 
 -   [x] Download mods
