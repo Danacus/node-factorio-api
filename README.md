@@ -551,6 +551,6 @@ Returns **[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refe
 
 ## Useful information
 
-**(https://wiki.factorio.com/Mod_Portal_API)**
-**(https://wiki.factorio.com/Matchmaking_API)**
-**(https://wiki.factorio.com/Web_Authentication_API)**
+- https://wiki.factorio.com/Mod_Portal_API
+- https://wiki.factorio.com/Matchmaking_API
+- https://wiki.factorio.com/Web_Authentication_API
