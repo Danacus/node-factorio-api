@@ -31,22 +31,28 @@ Download and update mods from the Factorio Mod Portal
 ```javascript
 import api from 'node-factorio-api'
 // Initialize the api
-api.init("path/to/mods/folder", false)
+api.init(false, 'path/to/mods/folder', 'path/to/saves/folder', '0.14.0')
 // Set to true if you want to allow multiple version of a mod
-
-// Optional: add path for saves
-api.setSavesPath('path/to/saves/folder')
 ```
 
 #### Examples
 
 ```javascript
 // You must provide a username and a password or token
-api.authenticate({username: '', token: '', password: '', require_ownership: false}).then(token => {
+api.authenticate({
+  username: '',
+  token: '',
+  password: '',
+  require_ownership: false
+}).then(token => {
     // Search for top 5 mods that contain 'bob'
-    api.searchMods({q: 'bob', order: 'top', page_size: 5}).then((body) => {
+    api.searchMods(
+      {q: 'bob', order: 'top', page_size: 5}
+    ).then((body) => {
         // Download the found mods
-        api.downloadMods(body.results.map(x => {return {name: x.name}})).then(() => {
+        api.downloadMods(body.results.map(x => {
+          return {name: x.name}
+        })).then(() => {
             // Remove all mods that start with 'bob' (glob patterns)
             api.removeModsMatching({name: "bob*"}).then(() => {
                 //Done
@@ -192,7 +198,7 @@ api.authenticate({username: '', token: '', password: '', require_ownership: fals
 
 // You can call function outside the Promise of api.authenticate,
 // but make sure that it's authenticated first
-if (api.isAuthenticated) {
+if (api.isAuthenticated()) {
     api.downloadMod({name: 'Foreman'}).then(() => {
         //Done
     })

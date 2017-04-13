@@ -1,6 +1,6 @@
 {
 	"name": "node-factorio-api",
-	"version": "0.1.21",
+	"version": "0.1.24",
 	"description": "Get data from the factorio mod portal and matchmaker",
 	"main": "lib/node-factorio-api.js",
 	"scripts": {
@@ -17,13 +17,10 @@
 	],
 	"author": "Danacus",
 	"license": "ISC",
+	"repository": "https://github.com/Danacus/node-factorio-api",
 	"dependencies": {
-		"chai": "^3.5.0",
-		"chai-as-promised": "^6.0.0",
-		"download-to-file": "^2.0.0",
 		"fs-jetpack": "^0.13.3",
 		"jszip": "^3.1.3",
-		"mocha": "^3.2.0",
 		"request": "^2.81.0",
 		"request-progress": "^3.0.0",
 		"request-promise": "^4.2.0",
@@ -31,6 +28,9 @@
 	},
 	"devDependencies": {
 		"babel-cli": "^6.24.1",
-		"babel-preset-env": "^1.3.3"
+		"babel-preset-env": "^1.3.3",
+		"chai": "^3.5.0",
+		"chai-as-promised": "^6.0.0",
+		"mocha": "^3.2.0"
 	}
 }
