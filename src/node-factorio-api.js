@@ -459,6 +459,7 @@ class FactorioAPI {
   /**
   * This function gets all available online games
   * @returns {Promise.<Object>} returns result of the request (https://multiplayer.factorio.com/get-games?username=<your_username>&token=<your_token>)
+  * @see {@link https://wiki.factorio.com/Matchmaking_API#get-games|Factorio Wiki}
   */
   static getGames() {
     let options = {
@@ -478,6 +479,7 @@ class FactorioAPI {
   * This function gets details of a game
   * @param {string} gameId the id of an online game (get it from getGames())
   * @returns {Promise.<Object>} returns result of the request (https://multiplayer.factorio.com/get-games?username=<your_username>&token=<your_token>)
+  * @see {@link https://wiki.factorio.com/Matchmaking_API#get-game-details|Factorio Wiki}
   */
   static getGameDetails(gameId) {
     let options = {
