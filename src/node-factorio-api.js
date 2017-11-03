@@ -657,6 +657,24 @@ class FactorioAPI {
       })
     })
   }
+  
+  /**
+  * This function gets the names and versions of the mods in the mods folder
+  * @returns {Promise.<Object[]>} returns array of objects with name and version of each mod
+  */
+  static getInstalledMods() {
+    return new Promise((resolve, reject) => {
+      jetpack.findAsync(this.modPath, { matching: '*_*.zip' }).then((files) => {
+        let nameArr = files.map(file => ({
+          name: file.substring(file.indexOf("/") + 1, file.lastIndexOf("_")),
+          version: file.substring(file.lastIndexOf("_") + 1, file.lastIndexOf(".zip"))
+        }))
+        resolve(nameArr)
+      }).catch((err) => {
+        reject(err)
+      })
+    })
+  }
 
   /**
   * This function saves the mod list
