@@ -511,19 +511,16 @@ class FactorioAPI {
           for (var i = modCount, pos = 52; i > 0; i--) {
             let length = buffer.readUIntBE(pos, 1)
 
-            let modName = buffer.toString('utf-8', pos, pos + length + 2).trim()
+            let modName = buffer.toString('utf-8', pos + 1, pos + length + 1)
             let vMajor = buffer.readUIntBE(pos + length + 1, 1)
             let vMinor = buffer.readUIntBE(pos + length + 2, 1)
             let vPatch = buffer.readUIntBE(pos + length + 3, 1)
 
             let fullVersion = 'v' + vMajor + '.' + vMinor + '.' + vPatch
 
-            // Remove non-ASCII characters
-            modName = modName.replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, '')
-
             mods.push({name: modName, version: fullVersion})
 
-            pos += length + 4
+            pos += length + 8
           }
 
           if (includeFileName) {
@@ -657,7 +654,7 @@ class FactorioAPI {
       })
     })
   }
-  
+
   /**
   * This function gets the names and versions of the mods in the mods folder
   * @returns {Promise.<Object[]>} returns array of objects with name and version of each mod
