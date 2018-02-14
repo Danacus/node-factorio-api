@@ -236,11 +236,11 @@ class FactorioAPI {
           factorioVersion += '.0'
         }
         onlineMod.releases.forEach(release => {
-          if (release.factorio_version.split('.').length < 3) {
-            release.factorio_version += '.0'
+          if (release.info_json.factorio_version.split('.').length < 3) {
+            release.info_json.factorio_version += '.0'
           }
           if (semver.gt(release.version, mod.version)
-            && (semver.minor(release.factorio_version) == semver.minor(factorioVersion) || factorioVersion == "0.0.0")) {
+            && (semver.minor(release.info_json.factorio_version) == semver.minor(factorioVersion) || factorioVersion == "0.0.0")) {
             resolve({onlineMod, hasUpdate: true, version: release.version})
           }
         })
@@ -285,7 +285,7 @@ class FactorioAPI {
           release = onlineMod.releases[0]
         }
 
-        this.downloadModFromUrl(release.download_url).then(() => {
+        this.downloadModFromUrl(release.file_name, release.download_url).then(() => {
           resolve(onlineMod)
         }).catch((err) => {
           reject(err)
@@ -312,14 +312,14 @@ class FactorioAPI {
 
   /**
   * This function downloads a mod from a url
+  * @param {string} fileName the name of the file
   * @param {string} url the download_url of a release (example: /api/downloads/data/mods/id/name_version.zip)
   * @returns {Promise.<string>} returns name of the mod if resolved
   * @see {@link https://wiki.factorio.com/Mod_Portal_API#Releases|Factorio Wiki}
   */
-  static downloadModFromUrl(url) {
+  static downloadModFromUrl(fileName, url) {
     return new Promise((resolve, reject) => {
       let fullUrl = 'https://mods.factorio.com' + url + `?username=${this.username}&token=${this.token}`
-      let fileName = url.substr(url.lastIndexOf('/') + 1);
       let name = fileName.replace(fileName.substr(fileName.lastIndexOf('_')), '')
 
       progress(request(fullUrl))
@@ -412,23 +412,15 @@ class FactorioAPI {
 
   /**
   * This function gets all dependencies for a mod
-  * @param {Object} mod the mod
-  * @param {string} mod.name the name of the mod
+  * @param {Object} mod the mod you want to get info.json from
+  * @param {string} mod.name name of the mod
   * @param {boolean} [optionalMods=false] set to true if you want to download all optional mods (I don't know why you would ever want to do that, but you can!)
   * @returns {Promise.<Object[]>} returns array of mods with their name as property ([{name: name_of_the_mod}]) if resolved
   */
   static getDependencies(mod, optionalMods = false) {
     return new Promise((resolve, reject) => {
-      this.getMod(mod.name).then((onlineMod) => {
-        let release
-
-        if (mod.version) {
-          release = onlineMod.releases.find(x => x.version == mod.version)
-        } else {
-          release = onlineMod.releases[0]
-        }
-
-        let dependencies = release.info_json.dependencies
+      this.readModZipFile(path.basename(jetpack.find(this.modPath, {matching: `${mod.name}_*.zip`})[0])).then((info_json) => {
+        let dependencies = info_json.dependencies
 
         if (!optionalMods) {
           // Ignore "base" and dependencies that start with "?"
@@ -597,12 +589,12 @@ class FactorioAPI {
   * This function reads info.json from a zip file of a mod
   * @param {Object} mod the mod you want to get info.json from
   * @param {string} mod.name name of the mod
-  * @param {string} mod.version verison of the mod
+  * @param {string} mod.version version of the mod
   * @returns {Promise.<Object>} returns parsed info.json file if resolved
   */
   static readModZip(mod) {
     let fileName = `${mod.name}_${mod.version}.zip`
-    return readModZipFile(fileName)
+    return this.readModZipFile(fileName)
   }
 
   /**

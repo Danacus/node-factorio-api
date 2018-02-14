@@ -30,7 +30,7 @@ describe('Searching mods', () => {
   })
 
   it('rejects with "Mod not found" error', (done) => {
-    api.getMod('LolMod').should.be.rejectedWith('404 - {"detail":"Not found."}').notify(done)
+    api.getMod('LolMod').should.be.rejectedWith('404 - {"message":"Mod not found"}').notify(done)
   })
 
   it('searches mods', (done) => {
@@ -40,7 +40,7 @@ describe('Searching mods', () => {
       page_size: '10'
     }).should.eventually.have.property('results').with.lengthOf(10).notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Check for updates', () => {
   it('checks for update compatible with current game version', (done) => {
@@ -50,7 +50,7 @@ describe('Check for updates', () => {
 
   it('gets latest version for current game version', (done) => {
     api.checkUpdate({name: 'Foreman', version: '0.0.1'})
-      .should.eventually.have.property('version').which.equals('1.1.5').notify(done)
+      .should.eventually.have.property('version').which.equals('1.0.0').notify(done)
   })
 
   it('checks for update compatible with older game version (false when up-to-date)', (done) => {
@@ -62,7 +62,7 @@ describe('Check for updates', () => {
     api.checkUpdate({name: 'Foreman', version: '0.2.5'}, '0.13.0')
       .should.eventually.have.property('version').which.equals('0.2.6').notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Downloading mods', () => {
   it('downloads the latest version of a mod', (done) => {
@@ -79,7 +79,7 @@ describe('Downloading mods', () => {
       {name: 'bobmodules'}
     ]).should.be.fulfilled.notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Updating mods', () => {
   it('updates the to latest version of a mod for the current game version', (done) => {
@@ -93,7 +93,7 @@ describe('Updating mods', () => {
   it('resolves when up-to-date', (done) => {
     api.updateMod({name: 'Foreman', version: '1.1.5'}).should.be.fulfilled.notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Removing mods', () => {
   it('removes mods from array', (done) => {
@@ -101,25 +101,25 @@ describe('Removing mods', () => {
   })
 
   it('removes mods from matching a pattern', (done) => {
-    api.removeModsMatching({name: 'bob*'}).should.be.fulfilled.notify(done)
+    api.removeModsMatching({name: 'bobmodu*'}).should.be.fulfilled.notify(done)
   })
 
   it('removes mods from array (all versions)', (done) => {
     api.removeMods([{name: 'Foreman'}]).should.be.fulfilled.notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Downloading dependencies', () => {
   it('downloads dependencies for a mod', (done) => {
     api.downloadDependencies({name: 'boblogistics'}).should.eventually.have.lengthOf(1).notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Loading installed mods', () => {
   it('loads installed mods', (done) => {
-    api.loadInstalledMods().should.eventually.have.lengthOf(1).notify(done)
+    api.loadInstalledMods().should.eventually.have.lengthOf(2).notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Saving mod list', () => {
   it('saves the mod list', (done) => {
@@ -127,13 +127,13 @@ describe('Saving mod list', () => {
       api.saveModList(installedMods).should.be.fulfilled.notify(done)
     })
   })
-})
+}).timeout(10000);
 
 describe('Loading save file', () => {
   it('loads mods from a save file', (done) => {
     api.getModsFromSave('new game', true).should.eventually.have.property('mods').notify(done)
   })
-})
+}).timeout(10000);
 
 describe('Matchmaking', () => {
   it('gets all online games', (done) => {
@@ -141,6 +141,6 @@ describe('Matchmaking', () => {
   })
 
   it('gets details from a game', (done) => {
-    api.getGameDetails(1447938).should.be.fulfilled.notify(done)
+    api.getGameDetails(437645).should.be.fulfilled.notify(done)
   })
-})
+}).timeout(10000);
