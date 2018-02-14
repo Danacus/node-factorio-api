@@ -1,6 +1,6 @@
 {
 	"name": "node-factorio-api",
-	"version": "0.1.24",
+	"version": "0.2.0-beta",
 	"description": "Get data from the factorio mod portal and matchmaker",
 	"main": "lib/node-factorio-api.js",
 	"scripts": {

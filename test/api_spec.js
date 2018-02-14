@@ -26,7 +26,7 @@ describe('init', () => {
 
 // Not working anymore
 
-/*describe('Searching mods', () => {
+describe('Searching mods', () => {
   it('gets information from a mod', (done) => {
     api.getMod('Foreman').should.eventually.have.property('releases').notify(done)
   })
@@ -36,13 +36,9 @@ describe('init', () => {
   })
 
   it('searches mods', (done) => {
-    api.searchMods({
-      q: 'bob',
-      order: 'top',
-      page_size: '10'
-    }).should.eventually.have.property('results').with.lengthOf(10).notify(done)
-  })
-}).timeout(10000);*/
+    api.searchMods('bob').should.eventually.have.lengthOf(62).notify(done)
+  }).timeout(10000);
+})
 
 describe('Check for updates', () => {
   it('checks for update compatible with current game version', (done) => {

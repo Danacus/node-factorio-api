@@ -56,9 +56,9 @@ api.authenticate({
   password: '',
   require_ownership: false
 }).then(token => {
-    // Search for top 5 mods that contain 'bob'
+    // Search for mods that contain 'bob'
     api.searchMods(
-      {q: 'bob', order: 'top', page_size: 5}
+      'bob'
     ).then((body) => {
         // Download the found mods
         api.downloadMods(body.results.map(x => {

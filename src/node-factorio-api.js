@@ -156,24 +156,26 @@ class FactorioAPI {
   }
 
   /**
-  * WARNING: Currently broken due to chenges to the Mod Portal! This function searches for mods on the Mod Portal
-  * @param {Object} props the search properties, some examples below, there might be more options
-  * @param {string} props.q a search query
-  * @param {string} props.order the order of mods, possible values: top, alpha, updated
-  * @param {string} props.page_size the size of a page
-  * @returns {Promise.<Object>} returns the result if resolved (here's an example: https://mods.factorio.com/api/mods?q=FARL)
+  * This function searches for mods on the Mod Portal
+  * @param {string} query A search query
+  * @returns {Promise.<Object>} returns a filtered array with results, sorted from most downloads to least downloads
   */
-  static searchMods(props) {
+  static searchMods(query) {
     return new Promise((resolve, reject) => {
       let options = {
           method: 'GET',
           uri: `https://mods.factorio.com/api/mods`,
-          qs: props,
+          qs: {
+            page_size: 1000000
+          },
           json: true
       }
 
       rp(options).then((body) => {
-        resolve(body)
+        let valid = body.results.filter(result => result.name && result.title)
+        let results = valid.filter(result => result.name.toUpperCase().includes(query.toUpperCase()))
+        results = results.sort((a, b) => b.downloads_count - a.downloads_count);
+        resolve(results)
       }).catch((err) => {
         reject(err)
       })
