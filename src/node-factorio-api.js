@@ -156,7 +156,7 @@ class FactorioAPI {
   }
 
   /**
-  * This function searches for mods on the Mod Portal
+  * WARNING: Currently broken due to chenges to the Mod Portal! This function searches for mods on the Mod Portal
   * @param {Object} props the search properties, some examples below, there might be more options
   * @param {string} props.q a search query
   * @param {string} props.order the order of mods, possible values: top, alpha, updated
