@@ -1,6 +1,6 @@
 {
 	"name": "node-factorio-api",
-	"version": "0.2.0-beta",
+	"version": "0.2.2",
 	"description": "Get data from the factorio mod portal and matchmaker",
 	"main": "lib/node-factorio-api.js",
 	"scripts": {
@@ -31,6 +31,8 @@
 		"babel-preset-env": "^1.3.3",
 		"chai": "^3.5.0",
 		"chai-as-promised": "^6.0.0",
+		"jsdoc": "^3.5.5",
+		"jsdoc-to-markdown": "^4.0.1",
 		"mocha": "^3.2.0"
 	}
 }

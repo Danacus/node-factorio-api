@@ -21,7 +21,7 @@ describe('init', () => {
   it('authenticates with username and token', (done) => {
     api.authenticate({username: 'Danacus', token: ''})
       .should.be.fulfilled.notify(done)
-  })
+  }).timeout(10000);
 })
 
 // Not working anymore
@@ -60,7 +60,7 @@ describe('Check for updates', () => {
     api.checkUpdate({name: 'Foreman', version: '0.2.5'}, '0.13.0')
       .should.eventually.have.property('version').which.equals('0.2.6').notify(done)
   })
-}).timeout(10000);
+})
 
 describe('Downloading mods', () => {
   it('downloads the latest version of a mod', (done) => {
@@ -76,8 +76,8 @@ describe('Downloading mods', () => {
       {name: 'boblogistics'},
       {name: 'bobmodules'}
     ]).should.be.fulfilled.notify(done)
-  })
-}).timeout(10000);
+  }).timeout(10000);
+})
 
 describe('Updating mods', () => {
   it('updates the to latest version of a mod for the current game version', (done) => {

@@ -81,7 +81,7 @@ class FactorioAPI {
   }
 
   /**
- * This function authenticates with a username and password or token
+ * This function authenticates with a username and password or token, it also downloads and chaches the mod list
  * @param {Object} props the properties for authentication
  * @param {string} props.username the username
  * @param {string} props.password not recommended, use token instead
@@ -95,7 +95,9 @@ class FactorioAPI {
         this.token = props.token
         this.username = props.username
         this.authenticated = true
-        resolve(props.token)
+
+        this.reloadCache().then(() => resolve(props.token))
+        
       } else if (props.username && props.password) {
         let options = {
             method: 'POST',
@@ -111,6 +113,9 @@ class FactorioAPI {
         rp(options).then((body) => {
           this.username = body[0]
           this.authenticated = true
+        }).then(() => {
+          return this.reloadCache()
+        }).then(() => {
           resolve(body[0])
         }).catch((err) => {
           reject(err)
@@ -118,6 +123,30 @@ class FactorioAPI {
       } else {
         reject("Error: Insufficient information")
       }
+    })
+  }
+
+  /** 
+   * This function reloads the local cache file with a list of all the available mods
+  */
+  static reloadCache() {
+    return new Promise((resolve, reject) => {
+      let options = {
+          method: 'GET',
+          uri: `https://mods.factorio.com/api/mods`,
+          qs: {
+            page_size: 1000000
+          },
+          json: true
+      }
+
+      rp(options).then(body => {
+        return jetpack.writeAsync('mod_cache.json', JSON.stringify(body));
+      }).then(() => {
+       resolve() 
+      }).catch((err) => {
+        reject(err)
+      })
     })
   }
 
@@ -162,16 +191,9 @@ class FactorioAPI {
   */
   static searchMods(query) {
     return new Promise((resolve, reject) => {
-      let options = {
-          method: 'GET',
-          uri: `https://mods.factorio.com/api/mods`,
-          qs: {
-            page_size: 1000000
-          },
-          json: true
-      }
-
-      rp(options).then((body) => {
+      this.checkCache().then(() => {
+        return jetpack.readAsync('mod_cache.json', 'json')
+      }).then((body) => {
         let valid = body.results.filter(result => result.name && result.title)
         let results = valid.filter(result => result.name.toUpperCase().includes(query.toUpperCase()))
         results = results.sort((a, b) => b.downloads_count - a.downloads_count);
@@ -180,6 +202,20 @@ class FactorioAPI {
         reject(err)
       })
     })
+  }
+
+  static checkCache() {
+    return new Promise((resolve, reject) => {
+      jetpack.existsAsync('mod_cache.json').then(res => {
+        if (res) {
+          resolve();
+        } else {
+          this.reloadCache().then(() => {
+            resolve();
+          })
+        }
+      })
+    });
   }
 
   /**
