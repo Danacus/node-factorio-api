@@ -32,10 +32,13 @@ Download and update mods from the Factorio Mod Portal
 -   [x] Get mods from server
 -   [x] Search/list servers
 -   [x] Read mod zip file (get info.json)
+-   [x] Download the game client
 
 ## Installation
 
-`npm install node-factorio-api`
+I recommend using yarn instead of npm, because it's (a lot) faster.
+
+`yarn add node-factorio-api` (or `npm install node-factorio-api`)
 
 ## Usage
 
