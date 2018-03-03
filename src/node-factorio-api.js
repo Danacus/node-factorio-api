@@ -5,6 +5,9 @@ import path from 'path'
 import JSZip from 'jszip'
 import request from 'request'
 import progress from 'request-progress'
+import cheerio from 'cheerio'
+import ProgressPromise from 'progress-promise'
+import uuidv4 from 'uuid/v4'
 
 class FactorioAPI {
   /**
@@ -14,14 +17,17 @@ class FactorioAPI {
  * @param {string} [savePath=''] path to the saves folder
  * @param {string} [gameVersion='0.0.0'] the version of the game
  */
-  static init(allowMultipleVersions = false, modPath = '', savePath = '', gameVersion = "0.0.0") {
+  static init(allowMultipleVersions = false, modPath = '', savePath = '', downloadPath = '', gameVersion = "0.0.0") {
     this.token = null
     this.username = null
     this.modPath = modPath
     this.savePath = savePath
+    this.downloadPath = downloadPath
     this.gameVersion = gameVersion
     this.allowMultipleVersions = allowMultipleVersions
     this.authenticated = false
+    this.sessionId = ''
+    this.cookieJar = request.jar()
   }
 
   /**
@@ -82,48 +88,95 @@ class FactorioAPI {
 
   /**
  * This function authenticates with a username and password or token, it also downloads and chaches the mod list
- * @param {Object} props the properties for authentication
- * @param {string} props.username the username
- * @param {string} props.password not recommended, use token instead
- * @param {string} props.token the player token, can be found in player-data.json
- * @returns {Promise.<string>} returns token if resolved
+ * @param {Object} props The properties for authentication
+ * @param {string} props.username The username
+ * @param {string} props.password Not recommended, use token instead, but password is required for downloading the Factorio client, unless you manually provide a session id
+ * @param {string} props.token The player token, can be found in player-data.json
+ * @param {string} props.sessionId Only if you want to download the Factorio client, but you are to paranoid to type your password. You can get this session id by logging in with your browser on factorio.com. You will be able to find a session id in the cookies, by using the devtools of your browser.
+ * @returns {Promise} returns a promise
  */
   static authenticate(props) {
     return new Promise((resolve, reject) => {
-      props.require_ownership = typeof props.require_ownership !== 'undefined' ? props.require_ownership : false
       if (props.username && props.token) {
         this.token = props.token
         this.username = props.username
         this.authenticated = true
-
-        this.reloadCache().then(() => resolve(props.token))
-        
+        resolve();
+        return this.reloadCache()
       } else if (props.username && props.password) {
-        let options = {
-            method: 'POST',
-            uri: 'https://auth.factorio.com/api-login',
-            qs: {
-                username: props.username,
-                password: props.password,
-                require_ownership: props.require_ownership
-            },
-            json: true
-        }
-
-        rp(options).then((body) => {
-          this.username = body[0]
-          this.authenticated = true
+        this.authenticateAPI(props.username, props.password).then((body) => {
+          this.username = props.username;
+          this.token = body[0];
+          this.authenticated = true;
+          return this.getCSRFToken();
+        }).then(token => {
+          return this.authenticateWeb(props.username, props.password, token);
+        }).then((res) => {
+          this.sessionId = this.cookieJar.getCookieString('https://www.factorio.com/');
+          return this.reloadCache();
         }).then(() => {
-          return this.reloadCache()
-        }).then(() => {
-          resolve(body[0])
+          resolve();
         }).catch((err) => {
-          reject(err)
+          reject(err);
         })
+      } else if (props.sessionId) {
+        this.sessionId = props.sessionId;
+        resolve();
       } else {
-        reject("Error: Insufficient information")
+        reject("Error: Insufficient information");
       }
     })
+  }
+
+  static authenticateAPI(username, password) {
+    let apiAuthOptions = {
+      method: 'POST',
+      uri: 'https://auth.factorio.com/api-login',
+      qs: {
+        username: username,
+        password: password,
+        require_ownership: true
+      },
+      json: true
+    };
+
+    return rp(apiAuthOptions)
+  }
+
+  static getCSRFToken() {
+    let getCSRFOptions = {
+      method: 'GET',
+      uri: 'https://www.factorio.com/login',
+      resolveWithFullResponse: true,
+      jar: this.cookieJar,
+      headers: {
+        'Content-Type' : 'application/x-www-form-urlencoded'
+      },
+    };
+
+    return rp(getCSRFOptions).then(res => {
+      let $ = cheerio.load(res.body);
+      return $('input[name=csrf_token]').val();
+    });
+  }
+
+  static authenticateWeb(username, password, token) {
+    let authOptions = {
+      method: 'POST',
+      url: `https://www.factorio.com/login`,
+      form: {
+          csrf_token: token,
+          username_or_email: username,
+          password: password
+      },
+      headers: {
+        'Content-Type' : 'application/x-www-form-urlencoded'
+      },
+      jar: this.cookieJar,
+      resolveWithFullResponse: true ,
+      followAllRedirects: true
+    }
+    return rp(authOptions);
   }
 
   /** 
@@ -138,7 +191,7 @@ class FactorioAPI {
             page_size: 1000000
           },
           json: true
-      }
+      };
 
       rp(options).then(body => {
         return jetpack.writeAsync('mod_cache.json', JSON.stringify(body));
@@ -146,8 +199,8 @@ class FactorioAPI {
        resolve() 
       }).catch((err) => {
         reject(err)
-      })
-    })
+      });
+    });
   }
 
   /**
@@ -215,6 +268,70 @@ class FactorioAPI {
           })
         }
       })
+    });
+  }
+
+  /**
+   * This function can download the game
+   * @param {Object} props properties of the file you want to download 
+   * @param {string} props.version the version of the game, use 'latest' to get the latest experimental version
+   * @param {string} props.build the release build, choose between 'alpha', 'demo' and 'headless'. 'alpha' is the standard full-featured build
+   * @param {string} props.distro your OS and architecture, choose between 'win64', 'win64-manual', 'osx', 'linux64'
+   * @returns {ProgressPromise} returns a ProgressPromise, use .progress(percentage => {}) to get the progress and .then(() => {}) to see when the download is completed 
+   */
+  static downloadGame(props) {
+    return new ProgressPromise((resolve, reject, prog) => {
+      let filename = 'file';
+      let tempname = uuidv4();
+  
+      progress(request({
+        url: `https://factorio.com/get-download/${props.version}/${props.build}/${props.distro}`, 
+        headers: {
+          'Cookie': this.sessionId,
+        },
+        jar: this.cookieJar
+      }))
+        .on('progress', (state) => {
+          prog(state.percent)
+        })
+        .on('error', (err) => {
+          reject(err)
+        })
+        .on('response', (res) => {
+          filename = res.headers['content-disposition'].split("filename=")[1];
+        })
+        .on('end', () => {
+          jetpack.rename(path.join(this.downloadPath, tempname + '.temp'), path.join(this.downloadPath, filename));
+          resolve();
+        })
+        .pipe(jetpack.createWriteStream(path.join(this.downloadPath, tempname + '.temp')))
+    });
+  }
+
+  /**
+   * Get the version number of the latest version of the client
+   * @param {string} buildType build type, 'stable' or 'experimental' 
+   * @returns {Promise.<string>} returns the version number if resolved
+   */
+  static getLatestGameVersion(buildType) {
+    let url = '';
+    if (buildType == 'experimental') {
+      url = 'https://www.factorio.com/download/experimental';
+    } else {
+      url = 'https://www.factorio.com/download'
+    }
+
+    let options = {
+      method: 'GET',
+      url,
+      headers: {
+        'Cookie': this.sessionId,
+      },
+    };
+
+    return rp(options).then(body => {
+      let $ = cheerio.load(body);
+      return $('h3').first().text().split('(')[0].trim();
     });
   }
 
@@ -352,7 +469,7 @@ class FactorioAPI {
   * This function downloads a mod from a url
   * @param {string} fileName the name of the file
   * @param {string} url the download_url of a release (example: /api/downloads/data/mods/id/name_version.zip)
-  * @returns {Promise.<string>} returns name of the mod if resolved
+  * @returns {ProgressPromise.<string>} returns name of the mod if resolved
   * @see {@link https://wiki.factorio.com/Mod_Portal_API#Releases|Factorio Wiki}
   */
   static downloadModFromUrl(fileName, url) {
@@ -361,8 +478,11 @@ class FactorioAPI {
       let name = fileName.replace(fileName.substr(fileName.lastIndexOf('_')), '')
 
       progress(request(fullUrl))
+      .on('progress', (state) => {
+
+      })
       .on('error', (err) => {
-          reject(err)
+        reject(err)
       })
       .on('end', () => {
         if (!this.allowMultipleVersions) {

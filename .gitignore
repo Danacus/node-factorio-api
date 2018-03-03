@@ -4,3 +4,5 @@ src/test.js
 src/test2.js
 mods/
 saves/
+yarn.lock
+mod_cache.json

@@ -203,6 +203,23 @@ api.authenticate({
     api.readModZips().then((list) => {
       // list is an array with the parsed info.json file of each mod
     })
+
+    // Get the latest experimental version
+    api.getLatestGameVersion('experimental').then(version => {
+      // Download that version of the full client for Linux
+      // Please note that downloading the full client requires you to be 
+      // logged in with either your password or with a session id
+      return api.downloadGame({version, build: 'alpha', distro: 'linux64'});
+    }).progress(value => {
+      // Log the percentage of the progress
+      console.log(Math.round(value * 100) + '%');
+    }).then(() => {
+      // It's done!
+      console.log("Done!");
+    }).catch(err => {
+      // Catch any potential errors
+      console.log(err);
+    });
 }).catch(err => {
     // Oops! Something went wrong
 })

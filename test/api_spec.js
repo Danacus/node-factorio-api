@@ -6,7 +6,7 @@ import api from '../src/node-factorio-api'
 
 describe('init', () => {
   it('initializes with modPath, savePath and game version', () => {
-    api.init(false, './mods/', './saves/', '0.14.22')
+    api.init(false, './mods/', './saves/', './', '0.14.22')
     api.getGameVersion().should.equal('0.14.22')
     api.getModPath().should.equal('./mods/')
     api.getSavePath().should.equal('./saves/')
@@ -21,7 +21,12 @@ describe('init', () => {
   it('authenticates with username and token', (done) => {
     api.authenticate({username: 'Danacus', token: ''})
       .should.be.fulfilled.notify(done)
-  }).timeout(10000);
+  }).timeout(50000);
+
+  it('authenticates with username and password', (done) => {
+    api.authenticate({username: 'Danacus', password: ''})
+      .should.be.fulfilled.notify(done)
+  }).timeout(50000);
 })
 
 // Not working anymore
@@ -65,11 +70,11 @@ describe('Check for updates', () => {
 describe('Downloading mods', () => {
   it('downloads the latest version of a mod', (done) => {
     api.downloadMod({name: 'Foreman'}).should.be.fulfilled.notify(done)
-  })
+  }).timeout(10000);
 
   it('downloads a specified version of a mod', (done) => {
     api.downloadMod({name: 'Foreman', version: '0.2.6'}).should.be.fulfilled.notify(done)
-  })
+  }).timeout(10000);
 
   it('downloads multiple mods', (done) => {
     api.downloadMods([
@@ -77,6 +82,18 @@ describe('Downloading mods', () => {
       {name: 'bobmodules'}
     ]).should.be.fulfilled.notify(done)
   }).timeout(10000);
+})
+
+describe('Downloading the game', () => {
+  it('downloads a specific version', (done) => {
+    api.downloadGame({version: '0.16.27', build: 'headless', distro: 'linux64'}).should.be.fulfilled.notify(done)
+  }).timeout(1000000);
+
+  it('downloads the latest version', (done) => {
+    api.getLatestGameVersion('experimental').then(version => {
+      api.downloadGame({version, build: 'alpha', distro: 'linux64'}).should.be.fulfilled.notify(done)
+    })
+  }).timeout(10000000);
 })
 
 describe('Updating mods', () => {

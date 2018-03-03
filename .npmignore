@@ -4,3 +4,5 @@ lib/test2.js
 mods/
 saves/
 test/
+yarn.lock
+mod_cache.json
