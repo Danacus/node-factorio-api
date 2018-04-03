@@ -83,7 +83,7 @@ class FactorioAPI {
   * @returns {boolean} authenticated
   */
   static isAuthenticated() {
-    return this.authenticated
+    return this.authenticated;
   }
 
   /**
@@ -435,18 +435,18 @@ class FactorioAPI {
         let release
 
         if (mod.version) {
-          release = onlineMod.releases.find(x => x.version == mod.version)
+          release = onlineMod.releases.find(x => x.version == mod.version);
         } else {
-          release = onlineMod.releases[0]
+          release = onlineMod.releases[onlineMod.releases.length - 1];
         }
 
         this.downloadModFromUrl(release.file_name, release.download_url).then(() => {
-          resolve(onlineMod)
+          resolve(onlineMod);
         }).catch((err) => {
-          reject(err)
+          reject(err);
         })
       }).catch((err) => {
-        reject(err)
+        reject(err);
       })
     })
   }
