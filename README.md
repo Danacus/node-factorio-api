@@ -2,6 +2,8 @@
 
 * * *
 
+IMPORTANT: Moved to Gitlab: https://gitlab.com/Danacus/node-factorio-api
+
 Download and update mods from the Factorio Mod Portal
 
 * * *
